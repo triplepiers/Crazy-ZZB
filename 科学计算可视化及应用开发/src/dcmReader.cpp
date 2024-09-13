@@ -1,39 +1,36 @@
 #include "dcmReader.h"
 
 // read Single DCM Image
-void readDCM(string inputFile, vtkSmartPointer<vtkDICOMImageReader> &reader)
+void readDCM(const string& inputFile, const vtkSmartPointer<vtkDICOMImageReader> &reader)
 {
-  reader = vtkSmartPointer<vtkDICOMImageReader>::New();
-
   reader->SetFileName(inputFile.c_str());
   reader->Update();
 
-  vtkSmartPointer<vtkImageData> imageData = reader->GetOutput();
-  showDCM(imageData, reader);
-  return;
+  // vtkSmartPointer<vtkImageData> imageData = reader->GetOutput();
+
+  showDCM(reader);
 }
 
 // show Single DCM Image
-void showDCM(vtkSmartPointer<vtkImageData> &imageData, vtkSmartPointer<vtkDICOMImageReader> &reader) {
-  vtkSmartPointer<vtkImageViewer2> imageViewer = vtkSmartPointer<vtkImageViewer2>::New();
+void showDCM(const vtkSmartPointer<vtkDICOMImageReader>& reader) {
+  const vtkSmartPointer<vtkImageViewer2> imageViewer = vtkSmartPointer<vtkImageViewer2>::New();
   imageViewer->SetInputConnection(reader->GetOutputPort());
 
-  vtkSmartPointer<vtkRenderWindowInteractor> renWin;
-  renWin = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+  const vtkSmartPointer<vtkRenderWindowInteractor> renWin = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 
   imageViewer->SetupInteractor(renWin);
   imageViewer->Render();
   renWin->Start();
-  return;
+
 }
 
-string getCWD(void)
+string getCWD()
 {
-  char *buffer = NULL;
+  char *buffer = nullptr;
 #if defined(_WIN64) || defined(WIN32) || defined(_WIN32)
   buffer = _getcwd(NULL, 0);
 #else
-  buffer = getcwd(NULL, 0);
+  buffer = getcwd(nullptr, 0);
 #endif
 
   if (buffer)
@@ -48,7 +45,7 @@ string getCWD(void)
   }
 }
 
-vector<string> getDCMlist(string data_dir) {
+vector<string> getDCMlist(const string& data_dir) {
   vector<string> DCMlist = {};
 #if defined(_WIN64) || defined(WIN32) || defined(_WIN32)
   // todo
@@ -59,7 +56,7 @@ vector<string> getDCMlist(string data_dir) {
     exit(1);
   } else {
     struct dirent *dirp;
-    while ((dirp = readdir(dp)) != NULL) {
+    while ((dirp = readdir(dp)) != nullptr) {
       string file_name = dirp->d_name;
       if (file_name == "." || file_name == "..") continue;
       else                                       DCMlist.push_back(file_name);
@@ -69,7 +66,7 @@ vector<string> getDCMlist(string data_dir) {
   return DCMlist;
 }
 
-int main(void)
+int main()
 {
   string data_dir = getCWD() + DATA_BASE_DIR;
   cout << "reading data from dir: " << data_dir << endl;

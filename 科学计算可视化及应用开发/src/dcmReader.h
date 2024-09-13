@@ -24,7 +24,7 @@ VTK_MODULE_INIT(vtkInteractionStyle);
 
 using namespace std;
 
-void readDCM(string inputFile, vtkSmartPointer<vtkDICOMImageReader> &reader);
-void showDCM(vtkSmartPointer<vtkImageData> &imageData, vtkSmartPointer<vtkDICOMImageReader> &reader);
+void readDCM(const string& inputFile, const vtkSmartPointer<vtkDICOMImageReader> &reader);
+void showDCM(const vtkSmartPointer<vtkDICOMImageReader>& reader);
 string getCWD(void);
-vector<string> getDCMlist(string data_dir);
+vector<string> getDCMlist(const string& data_dir);
