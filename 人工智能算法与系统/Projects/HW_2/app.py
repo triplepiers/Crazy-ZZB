@@ -1,6 +1,5 @@
 from model import GAT
 from utils import DGraphFin
-from utils.utils import prepare_folder
 from utils.evaluator import Evaluator
 
 import torch
@@ -25,6 +24,7 @@ def train(epoch, train_loader, model, data, train_idx, optimizer, device):
     for batch_size, n_id, adjs in train_loader:
         # `adjs` holds a list of `(edge_index, e_id, size)` tuples.
         adjs = [adj.to(device) for adj in adjs]
+
         optimizer.zero_grad()
         out = model(data.x[n_id], adjs)
         loss = F.nll_loss(out, data.y[n_id[:batch_size]])
@@ -33,13 +33,13 @@ def train(epoch, train_loader, model, data, train_idx, optimizer, device):
 
         total_loss += float(loss)
         pbar.update(batch_size)
+
         gc.collect()
 
     pbar.close()
     loss = total_loss / len(train_loader)
 
     return loss
-
 
 @torch.no_grad()
 def test(layer_loader, model, data, split_idx, evaluator, device):
@@ -61,72 +61,48 @@ def test(layer_loader, model, data, split_idx, evaluator, device):
 
     return eval_results, losses, y_pred
 
-
-# 这个是默认接口
-def predict(data, node_id):
-    """
-    加载模型和模型预测
-    :param node_id: int, 需要进行预测节点的下标
-    :return: tensor, 类0以及类1的概率, torch.size[1,2]
-    """
-    # -------------------------- 实现模型预测部分的代码 ---------------------------
-    # 不加载模型了，直接读缓存的结果
-    preds = torch.load(save_dir + '/preds.pt')
-
-    return preds[node_id]
-
-
 if __name__ == '__main__':
     path = './datasets/'  # 数据保存路径
     save_dir = './results/'  # 模型保存路径
     dataset_name = 'DGraph'
     model_name = 'GAT'
     eval_metric = 'auc'
-    epochs = 2  # 200
+    epochs = 200
+    nlabels = 2
     log_steps = 10
 
-    GAT_params = {
+    params = {
         'lr': 0.003,
         'hidden_channels': 128,
-        'dropout': 0.0,
-        # n_layer = 2 => 直接实现了
-        # 'batchnorm': False, 
+        'dropout': 0.5,
         'l2': 5e-6,
         'layer_heads': [4, 1]
     }
 
-    # 我们纯种 CPU 选手
-    device = torch.device('cpu')
+    # Set Device
+    device = 0
+    device = f'cuda:{device}' if torch.cuda.is_available() else 'cpu'
+    device = torch.device(device)
 
-    dataset = DGraphFin(
+    # Handle Data
+    data = DGraphFin(
         root=path,
         name=dataset_name,
         transform=T.ToSparseTensor()
-    )
-
-    nlabels = 2
-
-    data = dataset[0]
+    )[0]
     data.adj_t = data.adj_t.to_symmetric()
-
-    x = data.x
-    x = (x - x.mean(0)) / x.std(0)
-    data.x = x
-
+    data.x = (data.x - data.x.mean(0)) / data.x.std(0)
     data.y = data.y.squeeze(1)
 
     split_idx = {
-        # TODO：这里歪曲了 train
         'train': data.train_mask,
         'valid': data.valid_mask,
         'test': data.test_mask
     }
 
+    # To Device
     data = data.to(device)
     train_idx = split_idx['train'].to(device)
-
-    result_dir = prepare_folder(dataset_name, model_name)
-    print('result_dir:', result_dir)
 
     train_loader = NeighborSampler(
         data.adj_t,
@@ -146,8 +122,7 @@ if __name__ == '__main__':
         num_workers=8
     )
 
-    para_dict = GAT_params
-    model_para = GAT_params.copy()
+    model_para = params.copy()
     model_para.pop('lr')
     model_para.pop('l2')
 
@@ -157,21 +132,18 @@ if __name__ == '__main__':
         out_channels=nlabels,
         **model_para
     ).to(device)
+    model.reset()
 
     print(f'Model {model_name} initialized')
 
     evaluator = Evaluator(eval_metric)
-
-    model.reset_parameters()
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=para_dict['lr'],
-        weight_decay=para_dict['l2']
+        lr=params['lr'],
+        weight_decay=params['l2']
     )
 
-    best_valid = 0
     min_valid_loss = 1e8
-    best_out = None
 
     for epoch in range(1, epochs + 1):
         loss = train(

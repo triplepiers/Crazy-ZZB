@@ -32,7 +32,7 @@ class GAT(torch.nn.Module):
 
         self.dropout = dropout
 
-    def reset_parameters(self):
+    def reset(self):
         for conv in self.convs:
             conv.reset_parameters()
 
@@ -42,8 +42,7 @@ class GAT(torch.nn.Module):
             x = self.convs[i]((x, x_target), edge_index)
             if i != 2 - 1:
                 x = F.relu(x)
-                # self.training 收 model.eval()/train() 影响
-                x = F.dropout(x, p=0.5, training=self.training)
+                x = F.dropout(x, p=self.dropout, training=self.training)
 
         return x.log_softmax(dim=-1)
 
