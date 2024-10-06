@@ -11,9 +11,6 @@ from torch_geometric.loader import NeighborSampler
 from tqdm import tqdm
 import gc
 
-
-# TODO: train() & test() 需要整改
-
 def train(epoch, train_loader, model, data, train_idx, optimizer, device):
     model.train()
 
@@ -74,7 +71,7 @@ if __name__ == '__main__':
     params = {
         'lr': 0.003,
         'hidden_channels': 128,
-        'dropout': 0.5,
+        'dropout': 0.0,
         'l2': 5e-6,
         'layer_heads': [4, 1]
     }
