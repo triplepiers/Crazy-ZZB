@@ -1,7 +1,5 @@
 __pycache__
 /dataset/*
+.idea
 
 Makefile
-
-Renderer.py 
-Rende.py
