@@ -18,13 +18,14 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderer
 )
 
-# from vtk import vtkScalarBarActor
+from vtk import vtkScalarBarActor
 
 
-def createClrTable():
+def createClrTable(range):
     clrTable = vtk.vtkLookupTable()
     clrTable.SetNumberOfColors(512)
     clrTable.SetHueRange(1.0, 0.0)
+    clrTable.SetTableRange(*range)
     clrTable.Build()
     return clrTable
 
@@ -47,30 +48,21 @@ def createPolygon(i, j, N):
     polygon.GetPointIds().SetId(3, lb+N+1)
     return polygon
 
+def createBarActor(clrTable):
+    barActor = vtkScalarBarActor()
+    barActor.SetNumberOfLabels(5)
+    barActor.SetLookupTable(clrTable)
+    barActor.GetLabelTextProperty().SetColor(0.0, 0.0, 0.0)
+    # set Pos
+    barActor.GetPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+    barActor.GetPositionCoordinate().SetValue(0.05, 0.1)
+    barActor.SetWidth(0.1)
+    barActor.SetHeight(0.8)
+    return barActor
 
-def visWindow(actor, title):
-    renderer = vtkRenderer()
-    renderWindow = vtkRenderWindow()
-
-    # renderWindow.SetWindowName('Single Page')
-
-    renderWindow.SetSize(550, 550)
-    renderWindow.AddRenderer(renderer)
-
-    renderer.AddActor(actor)
-    renderer.SetBackground(vtkNamedColors().GetColor3d('White'))
-    renderWindow.Render()
-
-    renderWindowInteractor = vtkRenderWindowInteractor()
-    renderWindowInteractor.SetInteractorStyle(None)       #暂时关掉鼠标交互
-    renderWindowInteractor.SetRenderWindow(renderWindow)
-    renderWindowInteractor.Start()
 
 
 def vis(W, N, title: str = ""):
-    # 自定义颜色
-    clrTable = createClrTable()
-
     # Setup four points
     points = vtkPoints()
     createPtSet(points, N)
@@ -84,8 +76,12 @@ def vis(W, N, title: str = ""):
 
     # Set Scalars (as W)
     scalars = vtk.vtkFloatArray()
+    flt_W = W.flatten()
     for i in range((N + 1) ** 2):
-        scalars.InsertTuple1(i, W[i])
+        scalars.InsertTuple1(i, flt_W[i])
+
+    # extract = vtk.vtkMarchingSquares()
+    # extract.SetInputArrayToProcess()
 
     # Create a PolyData
     polygonPolyData = vtkPolyData()
@@ -96,15 +92,31 @@ def vis(W, N, title: str = ""):
     # Create a mapper and actor
     mapper = vtkPolyDataMapper()
     mapper.SetScalarRange(scalars.GetRange())
+    # 自定义颜色
+    clrTable = createClrTable(scalars.GetRange())
     mapper.SetLookupTable(clrTable)
     mapper.SetInputData(polygonPolyData)
 
     actor = vtkActor()
-    # actor = vtkScalarBarActor() # 需要一个 2D 的 lookupTable
     actor.SetMapper(mapper)
 
+    barActor = createBarActor(clrTable)
+
     # Draw within a window
-    visWindow(actor, title)
+    renderer = vtkRenderer()
+    renderWindow = vtkRenderWindow()
+    renderWindow.SetSize(550, 550)
+    renderWindow.AddRenderer(renderer)
+
+    renderer.AddActor(actor)
+    renderer.AddActor2D(barActor)
+    renderer.SetBackground(vtkNamedColors().GetColor3d('White'))
+    renderWindow.Render()
+
+    renderWindowInteractor = vtkRenderWindowInteractor()
+    renderWindowInteractor.SetInteractorStyle(None)  # 暂时关掉鼠标交互
+    renderWindowInteractor.SetRenderWindow(renderWindow)
+    renderWindowInteractor.Start()
 
 
 
