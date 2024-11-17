@@ -93,22 +93,22 @@ def interpolation(known_z, gird_size):
         x, y
     ).reshape(gird_size, gird_size)
 
-def vis_idw(W, gird_size=400):
+def vis_idw(W, gird_size=400, twoD=False):
     # 这边 x,y 坐标改成 [0, grid_size] 了
     x_grid = np.tile(np.array([[ i for i in range(gird_size)]]).T, (1,gird_size))
     y_grid = np.tile(np.arange(gird_size), (gird_size,1))
 
     Zs = interpolation(W, gird_size)
-    # 2D
-    # sns.heatmap(
-    #     Zs,
-    #     cmap='seismic',
-    #     linewidth=0,
-    #     xticklabels=[], yticklabels=[],
-    #     square=True
-    # )
-    # 3D
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-    ax.plot_surface(x_grid, y_grid, Zs, cmap=plt.cm.seismic)
+    if twoD:
+        sns.heatmap(
+            Zs,
+            cmap='seismic',
+            linewidth=0,
+            xticklabels=[], yticklabels=[],
+            square=True
+        )
+    else:
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')
+        ax.plot_surface(x_grid, y_grid, Zs, cmap=plt.cm.seismic)
     plt.show()

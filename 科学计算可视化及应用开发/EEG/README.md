@@ -1,3 +1,35 @@
+- 目前的效果
+
+    - 仅显示电极位置
+    
+        ![](./img/Channels.png)
+
+    - 基于 MNE 的 2D 可视化（纯调包，肯定不行）
+
+        ![](./img/MNE_2D.png)
+
+    - 基于自己实现的 IDW 插值（就是平方反比的加权平均数）
+
+      - 基于 Seaborn heatmap 的 2D 可视化
+  
+        ![](./img/SNS_2D_heatmap.png)
+
+      - 基于 Seaborn 的 3D 可视化
+
+        ![](./img/SNS_3D.png)
+
+        <center>下面是俯视图 -> 因为网格不均匀看起来怪怪的</center>
+
+        ![](./img/SNS_3D_above.png.png)
+        
+      - 基于 VTK 的 2D 可视化（菜菜的，但是这个 API 真的抽象）
+
+        - Bar 的颜色不太好调成 红-蓝 渐变orz
+        - 是助教给的工具链
+        - 补天来得及的话会再糊一个 Marching Cube 提一下等值线
+
+        ![](./img/VTK_2D.png)
+
 - 数据集来自 [GitHub 仓库](https://github.com/mastaneht/SPIS-Resting-State-Dataset)
 
     - 1-64 channels 
