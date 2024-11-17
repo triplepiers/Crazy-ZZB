@@ -1,6 +1,6 @@
 from utils.DataLoader import MatLoader
 from utils.vis import vis_Channels, vis_EEG_mne, vis_idw, interpolation, xy, channelList
-from byVTK import vis
+from utils.byVTK import vis
 
 # 可能需要安装的包：mne, vtk, pandas, numpy, sciy
 # 可以直接 python app.py，然后缺什么装什么
@@ -28,5 +28,8 @@ if __name__ == '__main__':
     # vis_idw(data_t, twoD=True)  # 基于 IDW 插值，拿 matplot 画的二维（heatmap）
 
     # 基于 IDW 插值，拿 VTK 画的二维
-    # TODO: 基于 Marching Square 的等值线提取 + 拖动形成动图？（算法效率低，会卡顿orz）
-    vis(interpolation(data_t, gird_size=N), N - 1, title, known_x, known_y)
+    # TODO: 拖动形成动图？（算法效率低，会卡顿orz）
+    vis(
+        interpolation(data_t, gird_size=N), N - 1, title, known_x, known_y,
+        contour=0.8  # 这里修改等值线
+    )

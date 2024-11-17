@@ -8,7 +8,7 @@ from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import (
     vtkCellArray,
     vtkPolyData,
-    vtkPolygon
+    vtkPolygon,
 )
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -19,7 +19,7 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 from vtk import vtkScalarBarActor
-
+from .MSquare import marching_squares
 
 def createClrTable(range):
     clrTable = vtk.vtkLookupTable()
@@ -84,7 +84,7 @@ def createChannelActor(X, Y, point_size=5):
     return actor
 
 
-def vis(W, N, title, X, Y):
+def vis(W, N, title, X, Y, contour: int=0.6):
     # Setup four points
     points = vtkPoints()
     createPtSet(points, N)
@@ -101,9 +101,6 @@ def vis(W, N, title, X, Y):
     flt_W = W.flatten()
     for i in range((N + 1) ** 2):
         scalars.InsertTuple1(i, flt_W[i])
-
-    # extract = vtk.vtkMarchingSquares()
-    # extract.SetInputArrayToProcess()
 
     # Create a PolyData
     polygonPolyData = vtkPolyData()
@@ -124,6 +121,7 @@ def vis(W, N, title, X, Y):
 
     barActor = createBarActor(clrTable)
     chActor = createChannelActor(X, Y)
+    lineActor = marching_squares(W, tar=contour)
 
     # Draw within a window
     renderer = vtkRenderer()
@@ -133,6 +131,7 @@ def vis(W, N, title, X, Y):
 
     renderer.AddActor(actor)
     renderer.AddActor(chActor)
+    renderer.AddActor(lineActor)
     renderer.AddActor2D(barActor)
     renderer.SetBackground(vtkNamedColors().GetColor3d('White'))
     renderWindow.Render()

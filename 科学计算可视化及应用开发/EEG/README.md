@@ -26,8 +26,7 @@
 
         - Bar 的颜色不太好调成 红-蓝 渐变orz
         - 是助教给的工具链
-        - 补天来得及的话会再糊一个 Marching Cube 提一下等值线
-
+        - 糊好了等值线
         ![](./img/VTK_2D.png)
 
 - 数据集来自 [GitHub 仓库](https://github.com/mastaneht/SPIS-Resting-State-Dataset)
