@@ -76,8 +76,11 @@ def interpolation(known_z, gird_size):
     known_z = Normalizer.zscored(known_z)
 
     # 生成等间隔 400 的 x 坐标，返回 ndarray = (400, )
-    un_known_x = np.linspace(min(known_x), max(known_x), gird_size)
-    un_known_y = np.linspace(min(known_y), max(known_y), gird_size)
+    # un_known_x = np.linspace(min(known_x), max(known_x), gird_size)
+    # un_known_y = np.linspace(min(known_y), max(known_y), gird_size)
+    r = max(abs(min(known_x)), abs(max(known_x)), abs(min(known_y)), abs(max(known_y)))
+    un_known_x = np.linspace(-r, r, gird_size)
+    un_known_y = np.linspace(-r, r, gird_size)
 
     # x_grid y_grid = (400, 400)
     # 分别存储了 grid[i][j] 的横纵坐标

@@ -61,8 +61,30 @@ def createBarActor(clrTable):
     return barActor
 
 
+def createChannelActor(X, Y, point_size=5):
+    chPSt = vtkPoints()
+    vertices = vtkCellArray()
+    for x, y in zip(X, Y):
+            pid = chPSt.InsertNextPoint(x, y, 0.0)
+            vertices.InsertNextCell(1)
+            vertices.InsertCellPoint(pid)
 
-def vis(W, N, title: str = ""):
+    polydata = vtkPolyData()
+    polydata.SetPoints(chPSt)
+    polydata.SetVerts(vertices)
+    polydata.Modified()
+
+    ptMapper = vtkPolyDataMapper()
+    ptMapper.SetInputData(polydata)
+
+    actor = vtkActor()
+    actor.SetMapper(ptMapper)
+    actor.GetProperty().SetColor(vtkNamedColors().GetColor3d('Black'))
+    actor.GetProperty().SetPointSize(point_size)
+    return actor
+
+
+def vis(W, N, title, X, Y):
     # Setup four points
     points = vtkPoints()
     createPtSet(points, N)
@@ -101,6 +123,7 @@ def vis(W, N, title: str = ""):
     actor.SetMapper(mapper)
 
     barActor = createBarActor(clrTable)
+    chActor = createChannelActor(X, Y)
 
     # Draw within a window
     renderer = vtkRenderer()
@@ -109,6 +132,7 @@ def vis(W, N, title: str = ""):
     renderWindow.AddRenderer(renderer)
 
     renderer.AddActor(actor)
+    renderer.AddActor(chActor)
     renderer.AddActor2D(barActor)
     renderer.SetBackground(vtkNamedColors().GetColor3d('White'))
     renderWindow.Render()
