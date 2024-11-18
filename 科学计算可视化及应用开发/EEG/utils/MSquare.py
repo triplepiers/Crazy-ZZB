@@ -10,18 +10,19 @@ from vtkmodules.vtkRenderingCore import (
     vtkPolyDataMapper,
 )
 
+contourActor = vtkActor()
+polyData = vtkPolyData()
+mapper = vtkPolyDataMapper()
+mapper.SetInputData(polyData)
+contourActor.SetMapper(mapper)
+contourActor.GetProperty().SetLineWidth(4)
+contourActor.GetProperty().SetColor(vtkNamedColors().GetColor3d('Black'))
 
 def draw_all(pts, lines):
-    actor = vtkActor()
-    polyData = vtkPolyData()
     polyData.SetPoints(pts)
     polyData.SetLines(lines)
-    mapper = vtkPolyDataMapper()
-    mapper.SetInputData(polyData)
-    actor.SetMapper(mapper)
-    actor.GetProperty().SetLineWidth(4)
-    actor.GetProperty().SetColor(vtkNamedColors().GetColor3d('Black'))
-    return actor
+    contourActor.Modified()
+    return
 
 
 def marching_squares(grid_data, tar):
@@ -117,4 +118,5 @@ def marching_squares(grid_data, tar):
                 off2 = linear_interpolation(c3, c2)
                 create_line(i, j + off1, i + off2, j + 1)
 
-    return draw_all(pts, lines)
+    draw_all(pts, lines)
+    return

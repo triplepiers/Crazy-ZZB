@@ -5,6 +5,7 @@ import vtkmodules.vtkInteractionStyle
 import vtkmodules.vtkRenderingOpenGL2
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkCommonDataModel import (
     vtkCellArray,
     vtkPolyData,
@@ -20,7 +21,56 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 from vtk import vtkScalarBarActor
-from .MSquare import marching_squares
+from .MSquare import marching_squares, contourActor
+
+class MyInteractorStyle(vtkInteractorStyleTrackballCamera):
+
+    def __init__(self,
+                 window, label, W,
+                 initContour, range, wInteractor, wHeight, parent=None):
+        self.window  = window
+        self.label   = label          # 文本标签
+        self.W       = W              # 等值线权重
+        self.contour = initContour
+        self.minn, self.maxx = range
+        self.interval = self.maxx - self.minn
+        self.wInteractor = wInteractor
+        self.wHeight     = wHeight
+        self.x, self.y = None, None
+        self.AddObserver('LeftButtonPressEvent',   self.btn_press_event)
+        self.AddObserver('LeftButtonReleaseEvent', self.btn_release_event)
+        # 重载，取消三维旋转
+        self.AddObserver('MouseMoveEvent',         self.mouse_move)
+
+    def mouse_move(self, obj, event):
+        return
+    def btn_press_event(self, obj, event):
+        self.x, self.y = self.wInteractor.GetEventPosition()
+        return
+    def btn_release_event(self, obj, event):
+        x, y = self.wInteractor.GetEventPosition()
+        if x == self.x and y == self.y:
+            return
+        # 直接基于 y 计算
+        dy = (y - self.y)/self.wHeight * self.interval
+        self.update_contour(dy)
+        return
+
+    def update_contour(self, dy):
+        neo_y = round(self.contour + dy, 3)
+        if neo_y > self.maxx:
+            self.contour = self.maxx
+        elif neo_y < self.minn:
+            self.contour = self.minn
+        else:
+            self.contour = neo_y
+        # 更新 label
+        self.label.SetInput(f'contour = {self.contour:.2f}')
+        self.label.Modified()
+        # 重绘 contour line
+        marching_squares(self.W, tar=self.contour)
+        self.window.Render()
+        return
 
 def createClrTable(range):
     clrTable = vtk.vtkLookupTable()
@@ -151,7 +201,8 @@ def vis(W, N, title, X, Y, contour: int=0.6):
 
     barActor = createBarActor(clrTable)
     chActor = createChannelActor(X, Y)
-    lineActor = marching_squares(W, tar=contour)
+    # 初始等值线 + 标签
+    marching_squares(W, tar=contour)
     txtActor = createTextActor(tar=contour)
 
     # Draw within a window
@@ -162,14 +213,18 @@ def vis(W, N, title, X, Y, contour: int=0.6):
 
     renderer.AddActor(actor)
     renderer.AddActor(chActor)
-    renderer.AddActor(lineActor)
+    renderer.AddActor(contourActor)
     renderer.AddActor(txtActor)
     renderer.AddActor2D(barActor)
     renderer.SetBackground(vtkNamedColors().GetColor3d('White'))
     renderWindow.Render()
 
     renderWindowInteractor = vtkRenderWindowInteractor()
-    renderWindowInteractor.SetInteractorStyle(None)  # 暂时关掉鼠标交互
+    renderWindowInteractor.SetInteractorStyle(MyInteractorStyle(
+        renderWindow, txtActor, W,
+        contour, scalars.GetRange(),
+        renderWindowInteractor, 550
+    ))  # 重载交互
     renderWindowInteractor.SetRenderWindow(renderWindow)
     renderWindowInteractor.Start()
 
