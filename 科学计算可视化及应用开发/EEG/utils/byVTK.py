@@ -15,7 +15,8 @@ from vtkmodules.vtkRenderingCore import (
     vtkPolyDataMapper,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
-    vtkRenderer
+    vtkRenderer,
+    vtkTextActor
 )
 
 from vtk import vtkScalarBarActor
@@ -84,7 +85,33 @@ def createChannelActor(X, Y, point_size=5):
     return actor
 
 
+def createTextActor(tar):
+    txtActor = vtkTextActor()
+    txtActor.SetInput(f'contour = {tar:.2f}')
+    txtActor.SetPosition2(40, 40)
+    txtActor.GetProperty().SetColor(vtkNamedColors().GetColor3d('Black'))
+    txtActor.GetTextProperty().SetFontSize(30)
+    return txtActor
+
+def createSphere(r):
+    sphere = vtk.vtkSphere()
+    sphere.SetCenter(r, r, 0)
+    sphere.SetRadius(r+0.5)
+    return sphere
+
+
+# 使用 Sphere 裁切平面，保留圆形数据
+def clip(plane, clip):
+    clipper = vtk.vtkClipPolyData()
+    clipper.SetInputData(plane)
+    clipper.SetClipFunction(clip)
+    clipper.GenerateClippedOutputOn() # 保留交集
+    clipper.Update()
+    return clipper.GetClippedOutput()
+
+
 def vis(W, N, title, X, Y, contour: int=0.6):
+
     # Setup four points
     points = vtkPoints()
     createPtSet(points, N)
@@ -103,10 +130,13 @@ def vis(W, N, title, X, Y, contour: int=0.6):
         scalars.InsertTuple1(i, flt_W[i])
 
     # Create a PolyData
-    polygonPolyData = vtkPolyData()
-    polygonPolyData.SetPoints(points)
-    polygonPolyData.SetPolys(polygons)
-    polygonPolyData.GetPointData().SetScalars(scalars)
+    planePolyData = vtkPolyData()
+    planePolyData.SetPoints(points)
+    planePolyData.SetPolys(polygons)
+    planePolyData.GetPointData().SetScalars(scalars)
+
+    # clip
+    polygonPolyData = clip(planePolyData, createSphere(N/2))
 
     # Create a mapper and actor
     mapper = vtkPolyDataMapper()
@@ -122,6 +152,7 @@ def vis(W, N, title, X, Y, contour: int=0.6):
     barActor = createBarActor(clrTable)
     chActor = createChannelActor(X, Y)
     lineActor = marching_squares(W, tar=contour)
+    txtActor = createTextActor(tar=contour)
 
     # Draw within a window
     renderer = vtkRenderer()
@@ -132,6 +163,7 @@ def vis(W, N, title, X, Y, contour: int=0.6):
     renderer.AddActor(actor)
     renderer.AddActor(chActor)
     renderer.AddActor(lineActor)
+    renderer.AddActor(txtActor)
     renderer.AddActor2D(barActor)
     renderer.SetBackground(vtkNamedColors().GetColor3d('White'))
     renderWindow.Render()
